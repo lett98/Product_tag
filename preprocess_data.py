@@ -4,6 +4,7 @@ from nltk.tokenize import MWETokenizer,word_tokenize
 import unicodedata
 import codecs
 from sklearn.model_selection import train_test_split
+from sklearn import preprocessing
 
 TRAIN_FILE = "train.csv"
 TEST_FILE = "test.csv"
@@ -102,6 +103,15 @@ def tag_other(row):
         return 0
     return 1
 
+def mapping_label(df):
+    lable = preprocessing.LabelEncoder()
+    lable.fit(df['category'])
+    mapping_label = {i:'__label__{}'.format(i) for i in range(21)}
+    df['category'] = lable.transform(df['category']) # transform lable to number
+    df['category'] = df['category'].apply(lambda x: mapping_label[x])
+    return df
+    
+    
 data_raw = import_data()
 data_raw["product_name"] = data_raw["product_name"].apply(preprocess)
 data_raw["is_text"] = data_raw.apply(lambda row: tag_other(row), axis = 1)
@@ -111,6 +121,7 @@ df = data.drop_duplicates()
 print("raw:",data_raw.shape)
 print("before:",data.shape)
 print("after:",df.shape)
+df = mapping_label(df)
 train, test = train_test_split(df, test_size=0.2,random_state=1234)
 train.to_csv(TRAIN_FILE, index=False)
 test.to_csv(TEST_FILE, index=False)
